@@ -1,0 +1,207 @@
+const { app, BrowserWindow, screen, ipcMain } = require('electron')
+const path = require('path')
+
+let mainWindow = null
+const displayWindows = new Map() // Map of displayId -> BrowserWindow
+
+function createMainWindow() {
+  const isDev = !app.isPackaged
+
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
+    },
+    title: 'ShowDisplay Pro - Control Panel',
+    backgroundColor: '#1f2937',
+  })
+
+  const startUrl = isDev
+    ? 'http://localhost:5173'
+    : `file://${path.join(__dirname, '../dist/index.html')}`
+
+  mainWindow.loadURL(startUrl)
+
+  if (isDev) {
+    mainWindow.webContents.openDevTools()
+  }
+
+  // Send displays to renderer once the window is ready
+  mainWindow.webContents.on('did-finish-load', () => {
+    const displays = screen.getAllDisplays()
+    const primaryId = screen.getPrimaryDisplay().id
+
+    console.log('=== SENDING DISPLAYS TO RENDERER ===')
+    console.log(`Total displays found: ${displays.length}`)
+
+    const displayData = displays.map((display, index) => ({
+      id: display.id,
+      name: display.id === primaryId ? 'Primary Display' : `Display ${index + 1}`,
+      bounds: display.bounds,
+      isPrimary: display.id === primaryId,
+    }))
+
+    displays.forEach((display, index) => {
+      console.log(`Display ${index + 1}:`, {
+        id: display.id,
+        bounds: display.bounds,
+        isPrimary: display.id === primaryId
+      })
+    })
+
+    mainWindow.webContents.send('displays-ready', displayData)
+    console.log('Displays sent to renderer')
+  })
+
+  mainWindow.on('closed', () => {
+    mainWindow = null
+    // Close all display windows
+    displayWindows.forEach((window) => window.close())
+    displayWindows.clear()
+  })
+}
+
+function createOrGetDisplayWindow(displayId) {
+  const isDev = !app.isPackaged
+
+  // If window already exists for this display, return it
+  if (displayWindows.has(displayId)) {
+    return displayWindows.get(displayId)
+  }
+
+  // Get all displays
+  const displays = screen.getAllDisplays()
+  const targetDisplay = displays.find((d) => d.id === displayId)
+
+  if (!targetDisplay) {
+    console.error(`Display with ID ${displayId} not found`)
+    return null
+  }
+
+  // Create new window for this display
+  const displayWindow = new BrowserWindow({
+    fullscreen: true,
+    frame: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+    title: `ShowDisplay - Output ${displayId}`,
+    backgroundColor: '#000000',
+  })
+
+  // Position window on the target display
+  displayWindow.setBounds(targetDisplay.bounds)
+
+  const displayUrl = isDev
+    ? `file://${path.join(__dirname, '../display.html')}`
+    : `file://${path.join(__dirname, '../dist/display.html')}`
+
+  displayWindow.loadURL(displayUrl)
+
+  displayWindow.on('closed', () => {
+    displayWindows.delete(displayId)
+  })
+
+  displayWindows.set(displayId, displayWindow)
+  return displayWindow
+}
+
+app.whenReady().then(() => {
+  createMainWindow()
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createMainWindow()
+    }
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
+
+// IPC Handlers
+
+// Get available displays
+ipcMain.handle('get-displays', () => {
+  const displays = screen.getAllDisplays()
+  const primaryId = screen.getPrimaryDisplay().id
+
+  console.log('=== DETECTED DISPLAYS ===')
+  console.log(`Total displays found: ${displays.length}`)
+  displays.forEach((display, index) => {
+    console.log(`Display ${index + 1}:`, {
+      id: display.id,
+      bounds: display.bounds,
+      isPrimary: display.id === primaryId
+    })
+  })
+  console.log('========================')
+
+  const result = displays.map((display, index) => ({
+    id: display.id,
+    name: display.id === primaryId
+      ? 'Primary Display'
+      : `Display ${index + 1}`,
+    bounds: display.bounds,
+    isPrimary: display.id === primaryId,
+  }))
+
+  console.log('Returning to renderer:', result)
+  return result
+})
+
+// Show media on specific display
+ipcMain.on('show-media-on-display', (_event, mediaPath, mediaType, displayId) => {
+  const displayWindow = createOrGetDisplayWindow(displayId)
+  if (displayWindow) {
+    displayWindow.webContents.send('display-media', { mediaPath, mediaType })
+    displayWindow.show()
+    displayWindow.focus()
+  }
+})
+
+// Stop media on specific display
+ipcMain.on('stop-media-on-display', (_event, displayId) => {
+  const displayWindow = displayWindows.get(displayId)
+  if (displayWindow) {
+    displayWindow.webContents.send('stop-media')
+  }
+})
+
+// Legacy handlers (for backwards compatibility)
+ipcMain.on('open-display-window', () => {
+  const displays = screen.getAllDisplays()
+  const externalDisplay = displays.find((d) => d.id !== screen.getPrimaryDisplay().id)
+  if (externalDisplay) {
+    createOrGetDisplayWindow(externalDisplay.id)
+  }
+})
+
+ipcMain.on('close-display-window', () => {
+  displayWindows.forEach((window) => window.close())
+  displayWindows.clear()
+})
+
+ipcMain.on('show-media', (_event, mediaPath, mediaType) => {
+  const displays = screen.getAllDisplays()
+  const externalDisplay = displays.find((d) => d.id !== screen.getPrimaryDisplay().id)
+  if (externalDisplay) {
+    const displayWindow = createOrGetDisplayWindow(externalDisplay.id)
+    if (displayWindow) {
+      displayWindow.webContents.send('display-media', { mediaPath, mediaType })
+    }
+  }
+})
+
+ipcMain.on('stop-media', () => {
+  displayWindows.forEach((window) => {
+    window.webContents.send('stop-media')
+  })
+})
