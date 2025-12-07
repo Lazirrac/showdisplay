@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(taskkill:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(node:*)",
+      "Bash(npx electron:*)",
+      "Bash(node_modules/.bin/electron:*)",
+      "Bash(ls:*)",
+      "Bash(node_modules/electron/dist/electron.exe:*)",
+      "Bash(dir:*)",
+      "Bash(npm uninstall:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
