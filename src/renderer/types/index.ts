@@ -1,6 +1,6 @@
 // Core types for ShowDisplay
 
-export type SourceType = 'video' | 'image' | 'text' | 'window-capture' | 'audio'
+export type SourceType = 'video' | 'image' | 'text' | 'timer' | 'window-capture' | 'audio'
 
 export interface Source {
   id: string
@@ -17,8 +17,15 @@ export interface Source {
   rotation: number
   zIndex: number
 
+  // New props
+  opacity: number
+  volume: number
+  isMuted: boolean
+  startMs: number
+  endMs: number
+
   // Source-specific properties
-  properties: VideoSourceProperties | ImageSourceProperties | TextSourceProperties | AudioSourceProperties | WindowCaptureProperties
+  properties: VideoSourceProperties | ImageSourceProperties | TextSourceProperties | TimerSourceProperties | AudioSourceProperties | WindowCaptureProperties
 }
 
 export interface VideoSourceProperties {
@@ -41,9 +48,25 @@ export interface TextSourceProperties {
   fontFamily: string
   color: string
   backgroundColor: string
+  backgroundOpacity: number
   textAlign: 'left' | 'center' | 'right'
   bold: boolean
   italic: boolean
+  underline: boolean
+}
+
+export interface TimerSourceProperties {
+  type: 'timer'
+  mode: 'countdown' | 'countup' | 'clock'
+  duration: number // seconds for countdown
+  running: boolean
+  elapsed: number // seconds elapsed
+  fontSize: number
+  fontFamily: string
+  color: string
+  backgroundColor: string
+  backgroundOpacity: number
+  format: 'HH:MM:SS' | 'MM:SS' | 'SS'
 }
 
 export interface AudioSourceProperties {

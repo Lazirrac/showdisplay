@@ -1,4 +1,3 @@
-import { useProjectStore } from './store/useProjectStore'
 import SceneList from './components/scenes/SceneList'
 import PreviewPanel from './components/preview/PreviewPanel'
 import ProgramPanel from './components/preview/ProgramPanel'
@@ -7,8 +6,6 @@ import AudioMixer from './components/mixer/AudioMixer'
 import TransitionControls from './components/preview/TransitionControls'
 
 export default function App() {
-  const { scenes, currentSceneId, previewSceneId } = useProjectStore()
-
   return (
     <div className="h-screen flex flex-col overflow-hidden p-2 gap-2 bg-slate-950">
       {/* Top Section: Preview and Program */}
@@ -31,13 +28,13 @@ export default function App() {
           <SceneList />
         </div>
 
-        {/* Sources */}
+        {/* Sources (Now includes Library) */}
         <div className="flex-1 flex flex-col">
           <SourcesList />
         </div>
 
         {/* Audio Mixer */}
-        <div className="w-80 flex flex-col">
+        <div className="w-64 flex flex-col">
           <AudioMixer />
         </div>
       </div>

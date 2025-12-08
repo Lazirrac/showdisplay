@@ -20,8 +20,8 @@ export default function AudioMixer() {
                   min="0"
                   max="100"
                   value={channel.volume}
-                  orient="vertical"
                   className="h-32"
+                  style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
                 />
                 <button className="text-xs px-2 py-1 bg-slate-700 rounded">
                   {channel.muted ? 'Unmute' : 'Mute'}

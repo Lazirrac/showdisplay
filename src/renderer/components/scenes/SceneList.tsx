@@ -1,7 +1,7 @@
 import { useProjectStore } from '../../store/useProjectStore'
 
 export default function SceneList() {
-  const { scenes, currentSceneId, previewSceneId, setPreviewScene, addScene, removeScene } = useProjectStore()
+  const { scenes, currentSceneId, previewSceneId, setPreviewScene, addScene } = useProjectStore()
 
   return (
     <div className="panel h-full flex flex-col">

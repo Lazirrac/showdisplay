@@ -10,7 +10,18 @@
       "Bash(ls:*)",
       "Bash(node_modules/electron/dist/electron.exe:*)",
       "Bash(dir:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(npm --version:*)",
+      "Bash(node_modules/.bin/electron.cmd:*)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout /t 8)",
+      "Bash(npm install:*)",
+      "Bash(npx which electron)",
+      "Bash(cat:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(echo:*)",
+      "Bash(unset:*)",
+      "Bash(timeout /t 3)"
     ],
     "deny": [],
     "ask": []

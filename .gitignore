@@ -5,7 +5,7 @@ package-lock.json
 # Build outputs
 dist/
 build/
-*.js
+# *.js
 *.js.map
 
 # Electron
